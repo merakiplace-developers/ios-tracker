@@ -153,13 +153,14 @@ open class Openreplay: NSObject {
     
     @objc open func triggerRecording(condition: String?) {
         self.bufferingMode = false
-        ORSessionRequest.create(doNotRecord: false) { sessionResponse in
+        let bufferStartTs = ScreenshotManager.shared.freezeBuffers()
+        ORSessionRequest.create(doNotRecord: false, timestamp: bufferStartTs) { sessionResponse in
             guard let sessionResponse = sessionResponse else { return print("Openreplay: no response from /start request") }
             
             // sending buffered messages and images - should not be bigger than 30sec buffer,
             // so the performance impact is minimal (as long as fps was lower than 10)
             MessageCollector.shared.syncBuffers()
-            ScreenshotManager.shared.syncBuffers()
+            ScreenshotManager.shared.sendScreenshots()
             
             MessageCollector.shared.start()
         }

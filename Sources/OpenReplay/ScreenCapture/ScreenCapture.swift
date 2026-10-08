@@ -209,7 +209,7 @@ open class ScreenshotManager {
         })
     }
 
-    func syncBuffers() {
+    func freezeBuffers() -> UInt64? {
         stateLock.lock()
         let buf1 = self.screenshots.count
         let buf2 = self.screenshotsBackup.count
@@ -221,12 +221,13 @@ open class ScreenshotManager {
             self.screenshots = self.screenshotsBackup
             self.screenshotsBackup.removeAll()
         }
+        let firstBufferedTs = self.screenshots.first?.1
         stateLock.unlock()
 
         bufferTimer?.invalidate()
         bufferTimer = nil
 
-        self.sendScreenshots()
+        return firstBufferedTs
     }
 
     // MARK: - sending screenshots

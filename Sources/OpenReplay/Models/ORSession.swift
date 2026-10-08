@@ -4,7 +4,7 @@ import DeviceKit
 class ORSessionRequest: NSObject {
     private static var params = [String: AnyHashable]()
 
-    static func create(doNotRecord: Bool,  completion: @escaping (ORSessionResponse?) -> Void) {
+    static func create(doNotRecord: Bool, timestamp: UInt64? = nil, completion: @escaping (ORSessionResponse?) -> Void) {
         guard let projectKey = Openreplay.shared.projectKey else { return print("Openreplay: no project key added") }
         
         // Make sure is on the main thread: beginGeneratingDeviceOrientationNotifications need Main thread.
@@ -50,7 +50,7 @@ class ORSessionRequest: NSObject {
                 "userOSVersion": UIDevice.current.systemVersion,
                 "userDevice": deviceModel,
                 "userDeviceType": deviceSafeName,
-                "timestamp": UInt64(Date().timeIntervalSince1970 * 1000),
+                "timestamp": timestamp ?? UInt64(Date().timeIntervalSince1970 * 1000),
                 "performances": performances,
                 "deviceMemory": UInt64(ProcessInfo.processInfo.physicalMemory / 1024),
                 "timezone": getTimezone(),
