@@ -17,6 +17,7 @@ open class Openreplay: NSObject {
     public var trackerState = CheckState.unchecked
     private var networkCheckTimer: Timer?
     public var bufferingMode = false
+    var awaitingTriggeredSession = false
     private var pathMonitor: NWPathMonitor?
     public var serverURL: String {
         get { NetworkManager.shared.baseUrl }
@@ -153,9 +154,11 @@ open class Openreplay: NSObject {
     
     @objc open func triggerRecording(condition: String?) {
         self.bufferingMode = false
+        self.awaitingTriggeredSession = true
         let bufferStartTs = ScreenshotManager.shared.freezeBuffers()
         ORSessionRequest.create(doNotRecord: false, timestamp: bufferStartTs) { sessionResponse in
             guard let sessionResponse = sessionResponse else { return print("Openreplay: no response from /start request") }
+            self.awaitingTriggeredSession = false
             
             // sending buffered messages and images - should not be bigger than 30sec buffer,
             // so the performance impact is minimal (as long as fps was lower than 10)
@@ -167,6 +170,7 @@ open class Openreplay: NSObject {
     }
     
     @objc open func stop() {
+        awaitingTriggeredSession = false
         networkCheckTimer?.invalidate()
         networkCheckTimer = nil
 

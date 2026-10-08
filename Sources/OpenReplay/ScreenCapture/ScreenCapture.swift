@@ -172,6 +172,7 @@ open class ScreenshotManager {
                     self.screenshots.append((compressedData, ts))
                     self.enforceScreenshotCaps()
                     let shouldSend = !openReplay.bufferingMode &&
+                        !openReplay.awaitingTriggeredSession &&
                         self.screenshots.count >= openReplay.options.screenshotBatchSize.rawValue
                     stateLock.unlock()
                     if shouldSend {
@@ -232,7 +233,7 @@ open class ScreenshotManager {
 
     // MARK: - sending screenshots
     func sendScreenshots() {
-        guard let sessionId = NetworkManager.shared.sessionId else {
+        guard let sessionId = NetworkManager.shared.sessionId, let token = NetworkManager.shared.token else {
             return
         }
         if messagesQueue.operationCount > maxPendingBatches {
@@ -275,7 +276,7 @@ open class ScreenshotManager {
                 do {
                     let gzData = try GzipArchive.archive(data: binaryData)
                     
-                    MessageCollector.shared.sendImagesBatch(batch: gzData, fileName: archiveName)
+                    MessageCollector.shared.sendImagesBatch(batch: gzData, fileName: archiveName, token: token)
                     self.stateLock.lock()
                     self.lastTs = newLastTs
                     self.stateLock.unlock()
@@ -300,7 +301,7 @@ open class ScreenshotManager {
                 }
                 do {
                     let gzData = try GzipArchive.archive(data: TarContainer.create(from: entries))
-                    MessageCollector.shared.sendImagesBatch(batch: gzData, fileName: archiveName)
+                    MessageCollector.shared.sendImagesBatch(batch: gzData, fileName: archiveName, token: token)
                     self.stateLock.lock()
                     self.lastTs = newLastTs
                     self.stateLock.unlock()
@@ -314,7 +315,7 @@ open class ScreenshotManager {
     
     // MARK: -- SAVING LOCALLY
     func saveScreenshotsLocally() {
-        guard let sessionId = NetworkManager.shared.sessionId else {
+        guard let sessionId = NetworkManager.shared.sessionId, let token = NetworkManager.shared.token else {
             return
         }
 
@@ -395,7 +396,7 @@ open class ScreenshotManager {
                         try finalArchive.write(to: archiveURL)
                         DebugUtils.log("Archive saved to \(archiveURL.path)")
                     }
-                    MessageCollector.shared.sendImagesBatch(batch: finalArchive, fileName: archiveName)
+                    MessageCollector.shared.sendImagesBatch(batch: finalArchive, fileName: archiveName, token: token)
                     self.stateLock.lock()
                     self.lastTs = newLastTs
                     self.stateLock.unlock()
@@ -423,7 +424,7 @@ open class ScreenshotManager {
                         try gzData.write(to: archiveURL)
                         DebugUtils.log("Archive saved to \(archiveURL.path)")
                     }
-                    MessageCollector.shared.sendImagesBatch(batch: gzData, fileName: archiveName)
+                    MessageCollector.shared.sendImagesBatch(batch: gzData, fileName: archiveName, token: token)
                     self.stateLock.lock()
                     self.lastTs = newLastTs
                     self.stateLock.unlock()

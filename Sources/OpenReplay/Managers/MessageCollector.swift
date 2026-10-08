@@ -3,6 +3,7 @@ import UIKit
 struct BatchArch {
     var name: String
     var data: Data
+    var token: String
 }
 
 class MessageCollector: NSObject {
@@ -99,13 +100,13 @@ class MessageCollector: NSObject {
         self.terminate()
     }
 
-    func sendImagesBatch(batch: Data, fileName: String) {
+    func sendImagesBatch(batch: Data, fileName: String, token: String) {
         messagesQueue.addOperation {
             if self.imagesWaiting.count >= 200 {
                 let overflow = self.imagesWaiting.count - 199
                 self.imagesWaiting.removeFirst(overflow)
             }
-        self.imagesWaiting.append(BatchArch(name: fileName, data: batch))
+        self.imagesWaiting.append(BatchArch(name: fileName, data: batch, token: token))
         self.flushImages()
         }
     }
@@ -133,7 +134,7 @@ class MessageCollector: NSObject {
         imagesSending.append(images)
 
         DebugUtils.log("Sending images \(images.name) \(images.data.count)")
-        NetworkManager.shared.sendImages(projectKey: projectKey, images: images.data, name: images.name) { (success) in
+        NetworkManager.shared.sendImages(projectKey: projectKey, images: images.data, name: images.name, token: images.token) { (success) in
             self.messagesQueue.addOperation {
                 self.imagesSending.removeAll { waiting in images.name == waiting.name }
                 guard success else {

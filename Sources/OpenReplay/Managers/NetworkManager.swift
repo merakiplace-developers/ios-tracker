@@ -10,7 +10,7 @@ class NetworkManager: NSObject {
     static let shared = NetworkManager()
     var baseUrl = "https://api.openreplay.com/ingest"
     public var sessionId: String? = nil
-    private var token: String? = nil
+    private(set) var token: String? = nil
     public var writeToFile = false
     private var framesSupport = false
     
@@ -153,12 +153,8 @@ class NetworkManager: NSObject {
         }
     }
 
-    func sendImages(projectKey: String, images: Data, name: String, completion: @escaping (Bool) -> Void) {
+    func sendImages(projectKey: String, images: Data, name: String, token: String, completion: @escaping (Bool) -> Void) {
         var request = createRequest(method: "POST", path: IMAGES_URL)
-        guard let token = token else {
-            completion(false)
-            return
-        }
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         let boundary = "Boundary-\(NSUUID().uuidString)"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
