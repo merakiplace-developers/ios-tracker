@@ -181,6 +181,9 @@ open class Openreplay: NSObject {
         pathMonitor = nil
 
         MessageCollector.shared.stop()
+        if bufferingMode {
+            MessageCollector.shared.discardBuffers()
+        }
         ScreenshotManager.shared.stop()
         Crashs.shared.stop()
         PerformanceListener.shared.stop()

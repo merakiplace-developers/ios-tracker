@@ -50,11 +50,15 @@ open class ScreenshotManager {
         self.settings = settings
     }
     
-    func stop() {
+    func pause() {
         timer?.invalidate()
         timer = nil
         bufferTimer?.invalidate()
         bufferTimer = nil
+    }
+
+    func stop() {
+        pause()
         stateLock.lock()
         lastTs = 0
         screenshots.removeAll()

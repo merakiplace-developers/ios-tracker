@@ -75,6 +75,9 @@ open class PerformanceListener: NSObject {
             
             if Openreplay.shared.options.screen {
                 ScreenshotManager.shared.start(startTs: Openreplay.shared.sessionStartTs)
+                if Openreplay.shared.bufferingMode {
+                    ScreenshotManager.shared.cycleBuffer()
+                }
             }
             
             if Openreplay.shared.options.analytics {
@@ -83,6 +86,9 @@ open class PerformanceListener: NSObject {
             
             DebugUtils.log("Resume collector")
             MessageCollector.shared.start()
+            if Openreplay.shared.bufferingMode {
+                MessageCollector.shared.cycleBuffer()
+            }
 
             DispatchQueue.main.async {
                 UIDevice.current.isBatteryMonitoringEnabled = true
@@ -147,7 +153,12 @@ open class PerformanceListener: NSObject {
     private func pauseOperations(completion: (() -> Void)? = nil) {
         MessageCollector.shared.stop()
         DebugUtils.log("messages stop")
-        ScreenshotManager.shared.stop()
+        // 버퍼링 중에는 백그라운드 직전 화면을 남겨, 복귀 뒤 트리거해도 이탈 전 화면이 올라가게 한다
+        if Openreplay.shared.bufferingMode {
+            ScreenshotManager.shared.pause()
+        } else {
+            ScreenshotManager.shared.stop()
+        }
         DebugUtils.log("screenshots stop")
         Crashs.shared.stop()
         DebugUtils.log("crash stop")

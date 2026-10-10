@@ -89,6 +89,14 @@ class MessageCollector: NSObject {
         }
     }
     
+    func discardBuffers() {
+        queue.async(flags: .barrier) {
+            self.messagesWaiting.removeAll()
+            self.messagesWaitingBackup.removeAll()
+            self.tick = 0
+        }
+    }
+
     func stop() {
         DebugUtils.log("stopping sender")
         sendInterval?.invalidate()
@@ -112,7 +120,7 @@ class MessageCollector: NSObject {
     }
 
     @objc func terminate() {
-        guard !sendingLastMessages else { return }
+        guard !sendingLastMessages, !Openreplay.shared.bufferingMode else { return }
         messagesQueue.addOperation {
             self.sendingLastMessages = true
             self.flushMessages()
@@ -121,6 +129,7 @@ class MessageCollector: NSObject {
     }
 
     @objc func flush() {
+        guard !Openreplay.shared.bufferingMode else { return }
         messagesQueue.addOperation {
             self.flushMessages()
             self.flushImages()
