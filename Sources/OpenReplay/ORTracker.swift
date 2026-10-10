@@ -164,6 +164,9 @@ open class Openreplay: NSObject {
             // so the performance impact is minimal (as long as fps was lower than 10)
             MessageCollector.shared.syncBuffers()
             ScreenshotManager.shared.sendScreenshots()
+            if let condition = condition {
+                self.event(name: "recording_trigger", payload: ["condition": condition])
+            }
             
             MessageCollector.shared.start()
         }
